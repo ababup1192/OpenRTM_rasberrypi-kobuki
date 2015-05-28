@@ -8,8 +8,12 @@ http://openrtm.org/openrtm/ja/content/raspberrypi-openrtm-tutorial
 
 https://www.raspberrypi.org/downloads/
 RASPBIANのOSイメージをダウンロード
-イメージをsdカードに焼きます。
-micro sdカードをrasberry pi 本体にぶっさします。
+イメージをSDカードに焼きます(必ず最初にフォーマットしてね)。
+(SDカード焼き方
+Win: http://openrtm.org/openrtm/ja/content/raspberrypi_sdcard#toc4,
+Mac: http://qiita.com/ttyokoyama/items/7afe6404fd8d3e910d09
+)
+micro SDカードをrasberry pi 本体にぶっさします。(USBが一杯あるほうの反対側の底面)
 
 初期のユーザ名とパスワードは、
 
@@ -20,25 +24,29 @@ micro sdカードをrasberry pi 本体にぶっさします。
 
 ## raspberry pi 初期設定
 
-拡張Unitをピンに挿して、電源アダプタにぶっ挿してディスプレイとキーボードとマウス（無くてもいい)、LANケーブルを挿して。起動。
+HDMIとディスプレイとキーボードとマウス、無線LANアダプタ（マウスは無くてもいい)、LANケーブルを挿す。MicroUSBとホストPCを繋いで起動！
 
-Expand Filesystem を選択。(SDカードのファイルサイズをフルで使う。)
+しばらくするとGUIぽいCUIメニューが出てくる。以下の項目をカーソルキーとエンターキーでポチポチ選択していく。
 
+- Expand Filesystem (SDカードをフルに使う)
 - Change User Password (デフォルトユーザ pi のパスワードを変えたかったらどうぞ)
 - Advanced Options
-     - SSH Enableにする。
-	 - Update しておく。
+     - SSH [Enable] (SSH接続の有効)
+	 - Update (Raspberry piのアップデート)
 
 - Finishを選択
 
-とりあえず一通り設定したら reboot するといいんじゃなかろうか。
+とりあえず一通り設定したらシェルが起動するので、再起動するといいんじゃなかろうか。
 
 	$ sudo reboot
 
 ## 無線LAN設定
 
-ホストマシンからraspberry pi へsshで アクセス
-ログイン時にディスプレイにローカルのipアドレスが出るはず(同じネットワーク内でアクセスしないとダメ。) たぶん eth0: offered 192.168.1.hoge みたいな感じ。
+ホストPCからraspberry piへsshで アクセス(Putty等)する。
+ログイン時にディスプレイにローカルのIPが出るはず(同じネットワーク内でアクセスしないとダメ！) たぶん **eth0: offered 192.168.1.hoge** みたいな感じ。ログインに成功したらシェルで以下のコマンドを打ち込んでいく。
+
+無線LANはDHCPでIPを動的に振るようにする。viもちろん使えると思うけど基本操作(http://www.envinfo.uee.kyoto-u.ac.jp/user/susaki/command/vi.html)
+(宗教上の理由でvi使えない人は、 $ apt-get install emacs 以下 vi → emacsに脳内補完)
 
 	$ sudo vi /etc/network/interfaces
 
@@ -56,8 +64,10 @@ Expand Filesystem を選択。(SDカードのファイルサイズをフルで�
 	// [pass]は、ルータに記載されている。(バッファロールータだったらKEYと書かれている箇所。)
 	$ wpa_passphrase [ESSID] [pass] >> wpa_supplicant.conf
 	$ cat wpa_supplicant.conf // で追記されているか確認。不安な場合はバックアップを取る。
-	// 問題無ければ以下のコマンドで無線LANを再起動
-	$ ifdown wlan0 && ifup wlan0
+	// 問題無ければ以下のコマンドで無線LANを再起動。成功確率五分ぐらいなので、接続出来ない人は有線で先を進めるか、SDカードにOS焼くところからやり直してください・・・。
+	// 対策として無線LAN子機を抜き差し、ルータの再起動、Raspberry piの再起動を試してね。
+	$ ifdown wlan0
+	$ ifup wlan0
 	// このコマンドでIPアドレス確認。
 	$ ifconfig wlan0
 
@@ -72,7 +82,11 @@ Expand Filesystem を選択。(SDカードのファイルサイズをフルで�
 
 	$ sudo vi /etc/hostname
 
-続いて、以下のファイルを指定通りに編集する。
+	raspberrypi
+		↓
+	rasp*
+
+続いて、以下の通りに編集する。
 
 	$ sudo vi /etc/hosts
 
@@ -96,11 +110,10 @@ Expand Filesystem を選択。(SDカードのファイルサイズをフルで�
 
 ## Open-RTMの準備
 
-	$ sudo apt-get  install git // たぶん標準で入っている。
+	$ sudo apt-get install git // たぶん標準で入っているのでいらない
 	$ cd $HOME && git clone https://gist.github.com/62d0ec4da753d6997dc1.git
 	// 15分くらい掛かるかも
 	$ cd 62d0ec4da753d6997dc1 && chmod 700 provision.sh && ./provision.sh
-
 
 ## Open-RTMのテスト
 
@@ -113,6 +126,8 @@ Expand Filesystem を選択。(SDカードのファイルサイズをフルで�
 ### ホストPC側の準備
 
 以下に従って起動していく。(スタートメニュー)
+分からない場合は2015年の講習会資料を参考するように。
+(http://openrtm.org/openrtm/ja/tutorial/robomech2015)
 
 - ネーミングサービスを起動。
 - ConsoleInComp コンポーネントを起動(C++でもPythonでも可)
@@ -124,7 +139,43 @@ Expand Filesystem を選択。(SDカードのファイルサイズをフルで�
 - rasberry pi で結果を確認する。
 
 
-## kobukiのRTCをコンパイル
+## KobukiのRTCの作成
 
-	$ svn co http://svn.openrtm.org/components/trunk/mobile_robots/kobuki
+	// svn経由でソースコードをチェックアウト。そしてmakeへ・・・
+	$ cd $HOME && svn co http://svn.openrtm.org/components/trunk/mobile_robots/kobuki
+	$ cd Kobuki
+	$ mkdir build
+	$ cd build
+  	$ cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+  	$ make
+  	$ cd src
+  	$ sudo make install
 
+## Raspberry pi と Kobukiをドッキング！
+
+写真の状態にする。もし電源をKobukiからRaspberry piへ給電出来ない場合は、スマホ用のモバイルバッテリーなどから給電すると良いよ。KobukiとRaspberry piの接続はプリンター用のUSBケーブルでブスッと挿します。
+
+![](http://openrtm.org/openrtm/sites/default/files/273/kobuki_and_raspi.png)
+
+側面のスイッチからKobukiの電源をON! Raspberry pi側から以下のコマンドと表示になれば接続確認！
+
+	$ ls /dev/ttyUSB*
+    /dev/ttyUSB0
+
+## PCからKobukiをLEDチカチカ！
+KobukiRTCをRaspberry pi側から起動。
+
+	$ rtm-naming // 既に起動してる場合は打たなくてOK
+	$ sudo /usr/lib/openrtm-1.1/rtc/KobukiAISTComp
+
+### ホストPCから操作
+
+コンソールからのテスト同様に、システムエディタを開いてRaspberry piと接続。コンポーネントを設置してActivateにする。コンポーネントのコンフィグ(編集ボタン)からLEDのラジオボタンをいじってみよう！
+
+## Kobuki猪突猛進！
+
+ホストPCからKobukiを自律操作させます(自律とは一体)。ズルい人は↓から解答をコピー
+http://openrtm.org/openrtm/sites/default/files/273/KobukiAutoMove.zip
+cmakeしてコンポーネントを起動しましょう。cmakeが分からない子は、Flipコンポーネントのcmakeを真似してみよう！
+(http://openrtm.org/openrtm/ja/node/5022)
+Kobukiがところかまわず衝突したら実験成功です。お疲れ様です。ジョイスティックのプログラムは起動できませんでしたorz
