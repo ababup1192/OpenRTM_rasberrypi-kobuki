@@ -1,5 +1,8 @@
 # raspberry pi 講習会ドキュメント
 
+ドキュメントURL
+https://github.com/ababup1192/OpenRTM_rasberrypi-kobuki
+
 ## 講習会ページ
 http://openrtm.org/openrtm/ja/tutorial/robomec2013
 http://openrtm.org/openrtm/ja/content/raspberrypi-openrtm-tutorial
@@ -60,6 +63,7 @@ HDMIとディスプレイとキーボードとマウス、無線LANアダプタ�
 
 	$ sudo bash
 	$ cd /etc/wpa_supplicant
+	$ lsusb // USB無線LANの子機が認識されているか確認。(メーカー名などが表示されるはず)
 	// iwlist wlan0 scan | grep ESSID で目的のルータのESSIDを探す。
 	// [pass]は、ルータに記載されている。(バッファロールータだったらKEYと書かれている箇所。)
 	$ wpa_passphrase [ESSID] [pass] >> wpa_supplicant.conf
@@ -143,7 +147,7 @@ HDMIとディスプレイとキーボードとマウス、無線LANアダプタ�
 
 	// svn経由でソースコードをチェックアウト。そしてmakeへ・・・
 	$ cd $HOME && svn co http://svn.openrtm.org/components/trunk/mobile_robots/kobuki
-	$ cd Kobuki
+	$ cd kobuki
 	$ mkdir build
 	$ cd build
   	$ cmake -DCMAKE_INSTALL_PREFIX=/usr ..
