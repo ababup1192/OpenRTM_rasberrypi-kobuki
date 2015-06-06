@@ -36,7 +36,13 @@ HDMIとディスプレイとキーボードとマウス、無線LANアダプタ�
 - Advanced Options
      - SSH [Enable] (SSH接続の有効)
 	 - Update (Raspberry piのアップデート)
-
+- Internationalisation Options(国際化設定・キーボード設定 長いので注意！)
+ 	- Change Keyboard Layout Set(キーボードレイアウト設定・時間掛かります。)
+ 		- Generic 105-key (intl) PC(DefaultがUKなので、Otherからキーボードに合わせて設定する。)
+ 		- Otherから選択すると、Configuring keyboard-configurationの欄に現れるので、それを選択する。
+ 		- The default for the keyboard layout
+ 		- No compose key
+ 		- Yes
 - Finishを選択
 
 とりあえず一通り設定したらシェルが起動するので、再起動するといいんじゃなかろうか。
@@ -68,6 +74,7 @@ HDMIとディスプレイとキーボードとマウス、無線LANアダプタ�
 	// [pass]は、ルータに記載されている。(バッファロールータだったらKEYと書かれている箇所。)
 	$ wpa_passphrase [ESSID] [pass] >> wpa_supplicant.conf
 	$ cat wpa_supplicant.conf // で追記されているか確認。不安な場合はバックアップを取る。
+	// ファイルに追記 >> する前に手前で止めて、正しく書き込む内容か確認すること。
 	// 問題無ければ以下のコマンドで無線LANを再起動。成功確率五分ぐらいなので、接続出来ない人は有線で先を進めるか、SDカードにOS焼くところからやり直してください・・・。
 	// 対策として無線LAN子機を抜き差し、ルータの再起動、Raspberry piの再起動を試してね。
 	$ ifdown wlan0
@@ -183,3 +190,68 @@ http://openrtm.org/openrtm/sites/default/files/273/KobukiAutoMove.zip
 cmakeしてコンポーネントを起動しましょう。cmakeが分からない子は、Flipコンポーネントのcmakeを真似してみよう！
 (http://openrtm.org/openrtm/ja/node/5022)
 Kobukiがところかまわず衝突したら実験成功です。お疲れ様です。ジョイスティックのプログラムは起動できませんでしたorz
+
+## Kobuki ジョイスティック(ソフトウェア編)
+Windowsから仮想JoyStickを動かして、Kobukiを操作する。
+以下のディレクトリにJoyStickコンポーネントがあるので、それを改造するか、型を合わせるコンポーネントを作る必要がある。
+C:\Program Files (x86)\OpenRTM-aist\x.y\examples\Python\TkJoyStick
+C:\Program Files\OpenRTM-aist\x.y\examples\Python\TkJoyStick
+
+どう変更するかは、2013年の講習会ページを参照すること。(http://openrtm.org/openrtm/ja/content/raspberrypi_kobuki_control)
+
+## Kobuki ジョイスティック(ハード編)
+PiRT-Unit(拡張ユニット)をRaspberry piへ装着する。こんな感じ。さらに、これに加えてACアダプタを装着する必要がある。拡張ユニットの5V電源に接続しましょう。
+
+![](http://openrtm.org/openrtm/sites/default/files/637/pirt-unit.png)
+
+次に、Raspberry pi上で拡張ユニットを扱えるように、設定をする。設定を自動がしたスクリプトがあるので、そちらを使う。
+
+	$ cd $HOME && wget http://svn.openrtm.org/Embedded/trunk/RaspberryPi/tools/rpi.sh
+	$ chmod 755 rpi.sh
+
+このスクリプトファイルは、拡張ユニットの設定だけではなく、*type*に応じて機能の設定を自動で行う。*type*は以下の様なものがある。
+
+- basic: Raspberry pi の初期設定などを行う。(ドキュメントの前半部分でやっていたこと。)
+- kobuki: basic + kobukiの設定。(こちらも前章までに設定済み。)
+- kobuki_only: kobukiの設定。
+- rtunit: basic + 拡張ユニットの設定。
+- rtunit_only: 拡張ユニットの設定。
+- rtunit_example: basic + 拡張ユニットのサンプル集
+
+具体的なシェルの実行方法は、以下のようにする。
+
+	sudo ./rpi.sh [host_name] --type [type]
+
+このシェルスクリプトでは、強制的にホスト名(host_name)を書き換えてしまうので、既に設定してあるホスト名を指定すること。ヘルプを見るには、以下のように実行する。
+
+	$ sudo ./rpi.sh
+
+今回は、既に初期設定などを終えているので、以下のようにシェルスクリプトを実行する。
+
+	$ sudo ./rpi.sh rasp* --type rtunit_only
+
+次にSPIを有効にするために、初期画面を以下のコマンドで呼び出す。
+
+	$ sudo rasp-config
+
+以下のように選択。
+
+- Advanced Options
+	- SPI (Enableに)
+
+FinishするとRebootを促されるので、Rebootする。
+
+JoyStickを拡張ユニットに接続する。
+
+![](http://openrtm.org/openrtm/sites/default/files/84/ministick_connection.png)
+
+### joyStickのテスト
+JoyStickが正しく動くかのテストをするために、Pythonのテストプログラムを実行します。
+
+	$ mkdir $HOME/workspace && cd $HOME/workspace
+	$ git clone https://gist.github.com/ababup1192/2f62a52e006abf47ca0e stick_tests
+	$ cd stick_tests && python adc_test.py
+
+これでスティックを倒して、値が変化したらテスト成功です。全て0Vの場合は、アダプタが刺さっているかを確認してみてください。
+
+
